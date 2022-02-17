@@ -1,40 +1,82 @@
-1.0.0 - 09 Nov 2017
-Initial Release.
+using EdiEngine;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Text.Json;
+using System.Threading.Tasks;
+using System.Windows.Forms;
 
-1.1.0 - 13 Nov 2017
-Added XML Serialization and Deserialization.
+namespace TestEdiEngine
+{
+    public partial class Form1 : Form
+    {
+        public Form1()
+        {
+            InitializeComponent();
 
-1.2.0 - 15 Nov 2017
-Maps repository now contains all 004010 maps, including Purchase Order, Invoice and many others. You can easily craft yours on their basis.
+            EdiDataReader engine = new EdiDataReader();
 
-1.2.1 - 16 Nov 2017
-Added libs for .NET 4.5. to Nuget package.
+            string segmento = "~";
+            string elemento = "^";
 
-1.3.0 - 20 Nov 2017 	
-Added EDI 997 - Functional Acknowledgment generation.
+            //Tener el contenido del archivo en string
+            string ISA = "ISA^00^          ^00^          ^ZZ^PENSKEWPIB     ^ZZ^HGT9312179LA   ^220107^2057^U^00401^000019299^0^P^|~GS^SM^PENSKEWPIB^HGT9312179LA^20220107^2057^14816^X^004010~ST^204^148160001~B2^^HGTM^^1009477730^^PP^L~B2A^05^LT~L11^WHRLLP-IB^11~L11^TLRT^QY~L11^53FT^EQ~G62^64^20211224^1^0714~NTE^CBH^USD~N1^BT^WHIRLPOOL INBOUND^93^WHRLLP-IB~N3^C/O CASS INFORMATION SYSTEMS^P.O. BOX 17634~N4^ST. LOUIS^MO^63178-7601^USA~G61^IC^LOAD TENDER CONTACT^TE^877 467-3675~N1^SH^WHRLLP-IB~N1^CA^H. G. TRANSPORTACIONES S. A DE C. V~G61^IC^Tender Mail Box^TE^(55) 58 72 08 55~G61^IC^Tender Mail Box^AP^-~G61^IC^Tender Mail Box^FX^(81) 88 65 47 21~S5^1^LD^12028.407^L^22^SK^3104.1^E~L11^WHR-IB05410038220107^CO~L11^HOOK^AO~L11^1019381577^2I~L11^1^QN~G62^37^20220107^I^1400~G62^38^20220107^K^1530~AT8^G^L^12028.407^0^22^E^3104.1~NTE^BOL^Buen dia se anexa los Numero de parte Recolectados   lista de empaque;81904940  ~NTE^BOL^caja Numero,1471  W10912379 / W10911504  color negro.  con 1,054juegos[ PRODUCTI~NTE^BOL^ON ]~N1^SF^REHAU SA DE CV-GARCIA,NL^93^WHIBM047135~N3^AVE CIRCUITO INDUSTRIAL HUMBERTO~N4^GARCIA^NX^66000^MEX~G61^IC^SHIPPING DEPT^TE^JOHANA D?AZ~G61^IC^SHIPPING DEPT^EM^JOHANA.DIAZ@REHAU.COM~OID^SH-1017936054~S5^2^CU^12028.407^L^22^SK^3104.1^E~L11^WHR-IB05410038220107^CO~L11^HOOK^AO~L11^1019381578^2I~L11^2^QN~G62^53^20220107^G^2030~G62^54^20220107^L^2030~AT8^G^L^12028.407^0^22^E^3104.1~NTE^BOL^Buen dia se anexa los Numero de parte Recolectados   lista de empaque;81904940  ~NTE^BOL^caja Numero,1471  W10912379 / W10911504  color negro.  con 1,054juegos[ PRODUCTI~NTE^BOL^ON ]~N1^ST^RAMOS ARIZPE OPS-WHIRLPOOL^93^WHIBM21~N3^BOULEVARD OMEGA #2150 PARQUE IND~N4^RAMOS ARIZPE^CU^25903^MEX~G61^IC^RECEIVING DEPT^TE^(956) 235-0235~G61^IC^RECEIVING DEPT^EM^hector.gonzalez@penske.com~OID^SH-1017936054~L3^12028.407^G^^^^^^^3104.1^E^0^L~SE^53^148160001~GE^1^14816~IEA^1^000019299~";
 
-1.3.1 - 28 Nov 2017 
-Added HL Loop Hierarchical parsing.
+            var model = engine.FromString(ISA);
 
-1.3.2 - 29 Nov 2017
-Added ability to use external map assembly.
+            string[] array = ISA.Split(segmento);
 
-1.5.0 - 6 Dec 2017
-Implemented Syntax Notes and their validation in EdiReader.
-Added segment level validation (elements and syntax notes) to EdiWriter.
-Implemented composite data elements.
-Maps updated with composites and syntax notes.
-Bugfixes.
+            List<hojaEdi> oList = new List<hojaEdi>(0);
 
-1.5.1 - 23 Jan 2018
-Added NetStandard 2.0 targeted libraries.
+            //for para guardar el encabezado y los elementos del encabezado
 
-1.5.2 - 28 Aug 2018
-Added B (Binary) data type.
-Fixed Time validation parsing for 24h format.
+            for (int i = 0; i < array.Length; i++)
+            {
+                string[] secciones = array[i].Split(elemento);
 
-1.6.0 - 4 July 2020
-Added Sourcelink.
-Bugfix in Date Time validation. 
-Package updates.
-Only netstandard2 is now supported. 
+                string etiqueta = secciones[0];
+
+                hojaEdi hoja1 = new hojaEdi();
+                hoja1.EncabezadoSegmento = etiqueta;
+                hoja1.Elementos = secciones;
+
+                oList.Add(hoja1);
+
+
+            }
+
+                // for para dar formato al texto
+
+            for (int j = 0; j < oList.Count(); j++)
+            {
+                string datosEncabezado = oList[j].EncabezadoSegmento;
+
+                txtlog.Text += datosEncabezado;
+
+                for (int v = 1; v < oList[j].Elementos.Length; v++)
+                {
+                    string cuerpo = oList[j].Elementos[v];
+
+                    txtlog.Text += " " + cuerpo + " ";
+                }
+
+                txtlog.Text = txtlog.Text.Trim();
+
+                txtlog.Text += "\n\n";
+
+            }
+
+        }
+
+        public class hojaEdi
+        {
+            public string EncabezadoSegmento { get; set; }
+            public string[] Elementos { get; set; }
+        }
+
+    }
+}
